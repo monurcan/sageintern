@@ -1,0 +1,15 @@
+LTSPÝCE DEVRE TASARIMI
+Vgiriþ: 28V
+Vçýkýþ: 12V
+300kHz anahtarlama frekansý
+Maksimum çýkýþ akýmý 5A
+Kullanýlacak kontrolcü entegre LT3741-1
+
+
+Gözlemlenecek olaylar:
+
+Ýndüktör akýmý(Yüklü ve yüksüz durumda)
+Anlýk deðiþen akým yüklerine karþý sistemin vereceði giriþ/çýkýþ gerilim tepkisi(ripple, transient)
+Anahtarlama frekansý
+Maksimum yük aþýmý durumda çýkýþ gerilimi ve akýmý
+Maksimum yük durumunda sistem verimliliði
