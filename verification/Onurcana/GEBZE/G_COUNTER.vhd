@@ -1,0 +1,175 @@
+----------------------------------------------------------------------------------
+-- Company: TUBITAK SAGE
+-- Engineer: Adem GUNESEN
+-- 
+-- Create Date: 01.04.2019 16:07:19
+-- Design Name: Relational
+-- Module Name: G_RELATIONAL - RTL
+-- Project Name: Relational
+-- Target Devices: Unconstrained
+-- Tool Versions: Vivado 2016.3
+-- Description: A generic relational logic implementation based on System Generator Relational block
+--              for A=B, A!=B, A>B, A<B, A>=B, A<=B conditions.
+--              Output Z_SIG = 1 if the specified condition holds.
+-- Dependencies: None
+-- 
+-- Revision: 1
+-- Revision 0.01 - File Created
+-- Additional Comments: --
+-- 
+----------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity G_COUNTER is
+    Generic(
+        Free_or_Limited : boolean				:= FALSE;
+        Count_Limit 	: integer 				:= 255;
+        Direction 		: integer range 0 to 2	:= 0;
+        Width 			: integer range 1 to 256:= 16;
+        G_Initial_Value	: integer 				:= 0;
+        Step			: natural 				:= 1;
+        Out_type		: boolean				:= FALSE;
+        Reset_Port 		: boolean				:= FALSE;
+        Load_Port 		: boolean				:= FALSE;
+        Enable_Port 	: boolean				:= FALSE);
+    Port ( CLK 			: in STD_LOGIC;
+           RST 			: in STD_LOGIC;
+		   EN 			: in STD_LOGIC;
+           LOAD 		: in STD_LOGIC;
+           UP 			: in STD_LOGIC;
+           DIN 			: in STD_LOGIC_VECTOR (Width - 1 downto 0);
+           COUNT 		: out STD_LOGIC_VECTOR (Width - 1 downto 0));
+end G_COUNTER;
+
+architecture RTL of G_COUNTER is
+signal count_reg		: STD_LOGIC_VECTOR (Width - 1 downto 0):= (others => '0');
+signal sum				: STD_LOGIC_VECTOR (Width - 1 downto 0):= (others => '0');
+signal sub				: STD_LOGIC_VECTOR (Width - 1 downto 0):= (others => '0');
+signal B_in				: STD_LOGIC_VECTOR (Width - 1 downto 0):= (others => '0');
+signal Initial_value	: STD_LOGIC_VECTOR (Width - 1 downto 0):= (others => '0');
+signal Reset			: STD_LOGIC := '0';
+signal Enable_inside	: STD_LOGIC := '1';
+signal Load_inside		: STD_LOGIC := '1';
+signal Limit_Exceeded_P : STD_LOGIC := '0';
+signal Limit_Exceeded 	: STD_LOGIC := '0';
+
+begin
+    
+if_NE: if(Enable_Port = FALSE) generate     
+    Enable_inside <= '1';
+end generate if_NE;
+if_E: if(Enable_Port = TRUE) generate      
+    Enable_inside <= EN;
+end generate if_E;
+
+if_NR: if(Reset_Port = FALSE) generate     
+	Reset <= '0';
+end generate if_NR;
+if_R: if(Reset_Port = TRUE) generate        
+	Reset <= RST;
+end generate if_R;
+
+if_NL: if(Load_Port = FALSE) generate     
+    Load_inside <= '0';
+end generate if_NL;
+if_L: if(Load_Port = TRUE) generate       
+    Load_inside <= LOAD;
+end generate if_L;
+
+if_S: if(Out_type = FALSE) generate                                         --Signed
+    Initial_value <= std_logic_vector(To_signed(G_Initial_Value, Width));
+    sum <= STD_LOGIC_VECTOR(signed(count_reg) + Step);
+    sub <= STD_LOGIC_VECTOR(signed(count_reg) - Step);
+    Limit_Exceeded_P <= '1' when signed(count_reg) = Count_Limit else '0';
+end generate if_S;
+
+if_US: if(Out_type = TRUE) generate                                        --Unsigned
+    Initial_value <= std_logic_vector(To_unsigned(G_Initial_Value, Width));    
+    sum <= STD_LOGIC_VECTOR(unsigned(count_reg) + Step);
+    sub <= STD_LOGIC_VECTOR(unsigned(count_reg) - Step);
+    Limit_Exceeded_P <= '1' when unsigned(count_reg) = Count_Limit else '0';
+end generate if_US;
+
+if_NF: if(Free_or_Limited = FALSE) generate                                  --Free
+    Limit_Exceeded <= '0';
+end generate if_NF;
+if_F: if(Free_or_Limited = TRUE) generate                           		--Limited
+    Limit_Exceeded <= Limit_Exceeded_P;
+end generate if_F;
+
+
+
+if_0: if(Direction = 0) generate       -- Up
+    pr_up:process(CLK)
+    begin
+        if(rising_edge(CLK)) then
+            if(Reset = '1') then
+                count_reg <= Initial_value;
+            else
+                if(Enable_inside = '1') then
+                    if(Load_inside = '1') then
+                        count_reg <= DIN;
+                    elsif(Limit_Exceeded = '1') then
+                        count_reg <= Initial_value;
+                    else
+                        count_reg <= sum;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process pr_up;
+end generate if_0;
+
+if_1: if(Direction = 1) generate       -- Down
+    pr_down:process(CLK)
+    begin
+        if(rising_edge(CLK)) then
+            if(Reset = '1') then
+                count_reg <= Initial_value;
+            else
+                if(Enable_inside = '1') then
+                    if(Load_inside = '1') then
+                        count_reg <= DIN;
+                    elsif(Limit_Exceeded = '1') then
+                        count_reg <= Initial_value;
+                    else
+                        count_reg <= sub;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process pr_down;
+end generate if_1;
+
+if_2: if(Direction = 2) generate       --Up / Down
+    pr_up_down:process(CLK)
+    begin
+        if(rising_edge(CLK)) then
+            if(Reset = '1') then
+                count_reg <= Initial_value;
+            else
+                if(Enable_inside = '1') then
+                    if(Load_inside = '1') then
+                        count_reg <= DIN;
+                    elsif(Limit_Exceeded = '1') then
+                        count_reg <= Initial_value;
+                    elsif(UP = '1') then
+                        count_reg <= sum ;
+                    else
+                        count_reg <= sub ;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process pr_up_down;
+end generate if_2;
+
+
+
+COUNT <= count_reg;
+
+end RTL;
