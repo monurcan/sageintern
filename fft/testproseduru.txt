@@ -1,0 +1,6 @@
+önce sinüs olusturmak için matlabtan fft_sine[fixed/float]_create.m çalistirin
+sonra twiddle faktörlerin degerlerini fft[/4]_twiddlefactors_create.cpp dosyasini çalistirarak bulun
+(eger floatingse #DEFINE FLOATING satiri kalsin, degilse yorum satiri yapin)
+ardindan questasimden k_[fixed/float][/4]_tb.sv çalistirin
+daha sonra fft_res.m dosyasina çikti vektörü kaydoluyor, bunu matlabta açip çalistirin
+ve sonra fft[fixed/float]_denemesi.m dosyasindan grafiksel sonuçlara bakin.
