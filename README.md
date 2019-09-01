@@ -1,2 +1,2 @@
 # sageintern
-TÜBİTAK SAGE internship report and source files.
+EE300 internship report and source files.
